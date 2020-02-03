@@ -103,7 +103,6 @@ public class MyDreamService extends DreamService {
         params2.leftMargin = xOffset;
         params2.topMargin = xOffset;
 
-
         Handler();
     }
 
