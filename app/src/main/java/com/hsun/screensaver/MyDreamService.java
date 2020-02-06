@@ -4,14 +4,22 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.Typeface;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.Message;
 import android.service.dreams.DreamService;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.AbsoluteSizeSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -37,14 +45,15 @@ import java.util.TimerTask;
 public class MyDreamService extends DreamService {
 
     public GpsTracker gpsTracker;
+    private double latitude;
+    private double longitude;
 
     private TextView location;
-    private TextView weather;
-    private TextView txt_time, txt_date, txt_battery;
+    private TextView txt_time, txt_battery;
     private ImageView img_charging_type;
     private Handler handler;
     private IntentFilter intentFilter;
-    private SimpleDateFormat timeFormat = new SimpleDateFormat("a h:mm:ss", Locale.getDefault()),
+    private SimpleDateFormat timeFormat = new SimpleDateFormat("a hh:mm:ss", Locale.getDefault()),
             dateFormat = new SimpleDateFormat("YYYY년 MM월 dd일 (E)", Locale.getDefault());
 
     private LottieAnimationView animationView;
@@ -65,43 +74,23 @@ public class MyDreamService extends DreamService {
         intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 
         txt_time = findViewById(R.id.txt_time);
-        txt_date = findViewById(R.id.txt_date);
         txt_battery = findViewById(R.id.txt_battery);
         img_charging_type = findViewById(R.id.img_charging_type);
         location = findViewById(R.id.location);
-       //weather = findViewById(R.id.weather);
 
         gpsTracker = new GpsTracker(this);
 
         animationView = (LottieAnimationView) findViewById(R.id.lottie);
 
-        double latitude = gpsTracker.getLatitude();
-        double longitude = gpsTracker.getLongitude();
+        latitude = gpsTracker.getLatitude();
+        longitude = gpsTracker.getLongitude();
 
         updateWeatherData(latitude, longitude);
+
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
             Animation anim = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.translate);
             animationView.startAnimation(anim);
         }
-
-        // 시계 랜덤 위치 변경 -> 일정시간마다 변경, 변경 범위 수정 예정
-        Random Ran_move = new Random();
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        int xOffset = Ran_move.nextInt(size.x)/3;
-        int yOffset = Ran_move.nextInt(size.y)/2;
-        Log.d("display", "x: "+size.x+ " y: "+size.y);
-        Log.d("OFFSET", "x: "+xOffset+" y: "+yOffset);
-
-        LinearLayout.LayoutParams params = null;
-        LinearLayout.LayoutParams params2 = null;
-        params = (LinearLayout.LayoutParams)txt_time.getLayoutParams();
-        params2 = (LinearLayout.LayoutParams)txt_date.getLayoutParams();
-        params.leftMargin = xOffset;
-        params.topMargin = yOffset;
-        params2.leftMargin = xOffset;
-        params2.topMargin = xOffset;
 
         Handler();
     }
@@ -121,6 +110,18 @@ public class MyDreamService extends DreamService {
                 HandleMessage.set(handler, "updateBattery");
             }
         }, 0, 1000);
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                HandleMessage.set(handler, "0x20");
+            }
+        }, 0, 600000);
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                HandleMessage.set(handler, "0x10");
+            }
+        }, 0, 60000);
     }
 
     @Override
@@ -135,8 +136,13 @@ public class MyDreamService extends DreamService {
                 Intent batteryStatus = registerReceiver(null, intentFilter);
                 switch (msg.getData().getString("title", "")) {
                     case "updateTime":
-                        txt_time.setText(timeFormat.format(new Date()));
-                        txt_date.setText(dateFormat.format(new Date()));
+                        SpannableStringBuilder time = new SpannableStringBuilder(timeFormat.format(new Date())+
+                                "\n"+dateFormat.format(new Date()));
+                        time.setSpan(new AbsoluteSizeSpan(35, true), 0, 3, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        time.setSpan(new AbsoluteSizeSpan(23, true), 11, 29, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        time.setSpan(new StyleSpan(Typeface.BOLD), 11, 29, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        time.setSpan(new ForegroundColorSpan(Color.GRAY), 11, 29, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        txt_time.setText(time);
                         break;
                     case "updateBattery":
                         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
@@ -155,6 +161,28 @@ public class MyDreamService extends DreamService {
                                 img_charging_type.setImageResource(R.drawable.charging_wireless);
                                 break;
                         }
+                        break;
+                    case "0x10": // 시계, 날짜 랜덤 위치 지정
+                        txt_time.setVisibility(View.VISIBLE);
+
+                        Random Ran_move = new Random();
+                        Display display = getWindowManager().getDefaultDisplay();
+                        Point size = new Point();
+                        display.getSize(size);
+                        int xOffset = Ran_move.nextInt(size.x)/2+20;
+                        int yOffset = Ran_move.nextInt(size.y)/3+20;
+                        Log.d("display", "x: "+size.x+ " y: "+size.y);
+                        Log.d("OFFSET", "x: "+xOffset+" y: "+yOffset);
+
+                        LinearLayout.LayoutParams params = null;
+                        LinearLayout.LayoutParams params2 = null;
+                        params = (LinearLayout.LayoutParams)txt_time.getLayoutParams();
+                        params.leftMargin = xOffset;
+                        params.topMargin = yOffset;
+                        txt_time.setLayoutParams(params);
+                        break;
+                    case "0x20": // 날씨 업데이트
+                        updateWeatherData(latitude, longitude);
                         break;
                 }
             }
@@ -210,7 +238,7 @@ public class MyDreamService extends DreamService {
                     break;
                 case 3:
                     //icon = this.getString(R.string.weather_drizzle);
-                    animationView.setAnimation("drizzle.json");
+                    animationView.setAnimation("rain.json");
                     break;
                 case 7:
                     //icon = this.getString(R.string.weather_foggy);
@@ -226,7 +254,11 @@ public class MyDreamService extends DreamService {
                     break;
                 case 5:
                     //icon = this.getString(R.string.weather_rainy);
-                    animationView.setAnimation("storm.json");
+                    if(actualId == 502 || actualId == 503 || actualId == 504){
+                        animationView.setAnimation("storm.json");}
+                    else{
+                        animationView.setAnimation("rain.json");
+                    }
                     break;
             }
         }
