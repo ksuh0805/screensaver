@@ -57,8 +57,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:baselineAligned="true">
+        android:orientation="vertical">
         <!--android:gravity="center"-->
 
 
@@ -69,7 +68,7 @@
             android:fontFamily="sans-serif-thin"
             android:text="14:22:59"
             android:textColor="@android:color/white"
-            android:textSize="120dp" />
+            android:textSize="120sp" />
 <!--
         <TextView
             android:id="@+id/txt_date"
@@ -138,7 +137,7 @@
             android:textColor="@android:color/white"
             android:textSize="20sp" />
         <TextView
-            android:id="@+id/location"
+            android:id="@+id/temperature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/txt_battery"

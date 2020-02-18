@@ -19,7 +19,7 @@ public class RemoteFetch {
     private static final String OPEN_WEATHER_MAP_API =
     "http://api.openweathermap.org/data/2.5/weather?&lat=%f&lon=%f&units=metric"; // openweathermap으로부터 가져오기
 
-    public static JSONObject getJSON(Thread context, double lat, double lon){
+    public static JSONObject getJSON(Context context, double lat, double lon){
 
         try {
             URL url = new URL(String.format(OPEN_WEATHER_MAP_API, lat, lon));
@@ -29,7 +29,7 @@ public class RemoteFetch {
                     (HttpURLConnection)url.openConnection();
 
             connection.addRequestProperty("x-api-key",
-                    "9224dde938857fba3d6eb23f9ddc9529");
+                    context.getString(R.string.APIkey));
 
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(connection.getInputStream()));

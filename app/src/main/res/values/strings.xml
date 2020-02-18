@@ -11,5 +11,6 @@
     <string name="weather_drizzle">&#xf01c;</string>
 
     <string name="place_not_found">Sorry, no weather data found.</string>
+    <string name="APIkey">9224dde938857fba3d6eb23f9ddc9529</string>
 
 </resources>
