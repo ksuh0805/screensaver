@@ -5,7 +5,7 @@ import android.os.Handler;
 import android.os.Message;
 
 /**
- *
+ * 핸들러 메세지 설정
  */
 
 public class HandleMessage {

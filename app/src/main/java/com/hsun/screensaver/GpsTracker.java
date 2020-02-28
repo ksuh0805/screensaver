@@ -20,19 +20,36 @@ import androidx.core.content.ContextCompat;
 
 public class GpsTracker extends Service implements LocationListener {
     private final Context mContext;
+    /**
+     * 위치
+     */
     Location location;
+    /**
+     * 위도
+     */
     double latitude;
+    /**
+     * 경도
+     */
     double longitude;
 
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10;
     private static final long MIN_TIME_BW_UPDATES = 1000 * 60 * 1;
     protected LocationManager locationManager;
 
+    /**
+     * gps정보 추적
+     * @param context
+     */
     public GpsTracker(Context context){
         this.mContext = context;
         getLocation();
     }
 
+    /**
+     * 위치정보 받아오기
+     * @return 위치정보
+     */
     public Location getLocation(){
         try {
             locationManager = (LocationManager) mContext.getSystemService(LOCATION_SERVICE);
@@ -84,6 +101,10 @@ public class GpsTracker extends Service implements LocationListener {
         return location;
     }
 
+    /**
+     * 위도 반환
+     * @return 위도
+     */
     public double getLatitude()
     {
         if(location != null)
@@ -93,6 +114,10 @@ public class GpsTracker extends Service implements LocationListener {
         return latitude;
     }
 
+    /**
+     * 경도 반환
+     * @return 경도
+     */
     public double getLongitude()
     {
         if(location != null)

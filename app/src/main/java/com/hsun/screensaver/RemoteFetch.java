@@ -16,9 +16,19 @@ import java.net.URL;
  */
 
 public class RemoteFetch {
+    /**
+     * openweathermap url
+     */
     private static final String OPEN_WEATHER_MAP_API =
-    "http://api.openweathermap.org/data/2.5/weather?&lat=%f&lon=%f&units=metric"; // openweathermap으로부터 가져오기
+    "http://api.openweathermap.org/data/2.5/weather?&lat=%f&lon=%f&units=metric";
 
+    /**
+     * 웹서버로부터 날씨정보 json 받아오기
+     * @param context
+     * @param lat 위도
+     * @param lon 경도
+     * @return 날씨 정보 json
+     */
     public static JSONObject getJSON(Context context, double lat, double lon){
 
         try {

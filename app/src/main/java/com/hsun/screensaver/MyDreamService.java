@@ -42,33 +42,77 @@ import java.util.TimerTask;
 
 import static android.content.Intent.ACTION_BATTERY_CHANGED;
 
+/**
+ * 화면보호기 메인
+ */
 public class MyDreamService extends DreamService {
 
+    /**
+     * 현재 위치 추적
+     */
     public GpsTracker gpsTracker;
+    /**
+     * 위도
+     */
     private double latitude;
+    /**
+     * 경도
+     */
     private double longitude;
 
-    private TextView temperature;
-    private TextView txt_time, txt_battery;
+    /**
+     * 현재 온도, 시간, 배터리
+     */
+    private TextView temperature, txt_time, txt_battery;
+    /**
+     * 충전 상태 이미지
+     */
     private ImageView img_charging_type;
+    /**
+     * 주기적 변경 핸들러
+     */
     private Handler handler;
+    /**
+     * 배터리 상태
+     */
     private IntentFilter intentFilter;
+    /**
+     * 시간 포맷 변환
+     */
     private SimpleDateFormat timeFormat = new SimpleDateFormat("a hh:mm:ss", Locale.getDefault()),
             dateFormat = new SimpleDateFormat("YYYY/MM/dd (E)", Locale.getDefault());
 
+    /**
+     * 날씨 애니메이션 이미지
+     */
     private LottieAnimationView animationView;
 
-    @Override //onAttachedToWindow() 해체
+    /**
+     * onAttachedToWindow() 해체
+     */
+    @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
     }
 
-    @Override // 초기 설정
+    /**
+     * 초기 설정
+     */
+    @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
-        setFullscreen(true); // 상태바 숨기기
-        setInteractive(false); // 터치 후 종료
-        setScreenBright(true); // 밝은 화면 설정
+        /**
+         * 상태바 숨기기 - On
+         */
+        setFullscreen(true);
+        /**
+         * 터치 후 종료 - On
+         */
+        setInteractive(false);
+        /**
+         * 밝은 화면 설정 - Off
+         */
+        setScreenBright(true);
         setContentView(R.layout.dream_page);
 
         intentFilter = new IntentFilter(ACTION_BATTERY_CHANGED);
@@ -84,11 +128,19 @@ public class MyDreamService extends DreamService {
 
         latitude = gpsTracker.getLatitude();
         longitude = gpsTracker.getLongitude();
-
+        /**
+         * 날씨 업데이트
+         */
         updateWeatherData(latitude, longitude);
 
+        /**
+         * 날씨 이미지 좌우 이동 애니메이션 추가
+         */
         Animation translate_anim = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.translate);
         animationView.startAnimation(translate_anim);
+        /**
+         * 충전 이미지 회전 애니메이션 추가
+         */
         Animation rotate_anim = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.rotate);
         img_charging_type.startAnimation(rotate_anim);
 
@@ -100,6 +152,9 @@ public class MyDreamService extends DreamService {
         super.onDestroy();
     }
 
+    /**
+     * 화면보호기 켜진 후 핸들러 작동
+     */
     @Override
     public void onDreamingStarted() {
         super.onDreamingStarted();
@@ -129,12 +184,18 @@ public class MyDreamService extends DreamService {
         super.onDreamingStopped();
     }
 
+    /**
+     * 화면보호기 내 시간, 배터리, 날씨 핸들러
+     */
     @SuppressLint("HandlerLeak")
     private void Handler() {
         handler = new Handler() {
             public void handleMessage(Message msg) {
                 Intent batteryStatus = registerReceiver(null, intentFilter);
                 switch (msg.getData().getString("title", "")) {
+                    /**
+                     * 시간 업데이트
+                     */
                     case "updateTime":
                         SpannableStringBuilder time = new SpannableStringBuilder(timeFormat.format(new Date())+
                                 "\n"+dateFormat.format(new Date()));
@@ -144,12 +205,18 @@ public class MyDreamService extends DreamService {
                         time.setSpan(new ForegroundColorSpan(Color.GRAY), 11, time.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         txt_time.setText(time);
                         break;
+                    /**
+                     * 배터리 잔량
+                     */
                     case "updateBattery":
                         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
                         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
                         txt_battery.setText(Math.round(level * 100 / scale) + "%");
                         break;
-                    case "move": // 시계, 날짜 랜덤 위치 지정
+                    /**
+                     * 시계, 날짜 랜덤 위치 지정
+                     */
+                    case "move":
                         Random ranMove = new Random();
                         Display display = getWindowManager().getDefaultDisplay();
                         Point size = new Point();
@@ -167,7 +234,8 @@ public class MyDreamService extends DreamService {
                                 xOffset = ranMove.nextInt(size.x - 750) + 30;
                                 yOffset = ranMove.nextInt(size.y - 450) + 30;
                                 Log.d("OFFSET", "x: " + xOffset + " y: " + yOffset);
-                            }while(yOffset>600 && yOffset<1100); //날씨 뷰와 겹치는 범위
+                            }
+                            while(yOffset>600 && yOffset<1100); //날씨 뷰와 겹치는 범위
                         }
                         Log.d("display", "x: "+size.x+ " y: "+size.y);
 
@@ -177,14 +245,23 @@ public class MyDreamService extends DreamService {
                         params.topMargin = yOffset;
                         txt_time.setLayoutParams(params);
                         break;
-                    case "updateWeather": // 날씨 업데이트
+                    /**
+                     * 날씨 업데이트
+                     */
+                    case "updateWeather":
                         updateWeatherData(latitude, longitude);
                         break;
                 }
             }
         };
     }
-    private void updateWeatherData(final double lat, final double lon) { // update weather
+
+    /**
+     * 날씨 업데이트
+     * @param lat 위도
+     * @param lon 경도
+     */
+    private void updateWeatherData(final double lat, final double lon) {
         new Thread() {
             public void run() {
                 final JSONObject json = RemoteFetch.getJSON(MyDreamService.this, lat, lon);
@@ -201,13 +278,21 @@ public class MyDreamService extends DreamService {
         }.start();
     }
 
-    private void renderWeather(JSONObject json) { // json에서 날씨 정보 추출
+    /**
+     * json에서 날씨 정보 추출
+     * @param json 웹서버로부터 받아온 날씨정보 json
+     */
+    private void renderWeather(JSONObject json) {
         try {
-            // Parse JSON object and array using json object
+            /**
+             * Parse JSON object and array using json object
+             */
             JSONObject details = json.getJSONArray("weather").getJSONObject(0);
             JSONObject main = json.getJSONObject("main");
 
-            // Use setWeatherIcon method - pass 2 parameters id and icon
+            /**
+             * Use setWeatherIcon method - pass 2 parameters id and icon
+             */
             setWeatherIcon(details.getInt("id"), details.getString("icon"));
             temperature.setText(main.getString("temp")+" °C");
 
@@ -215,7 +300,13 @@ public class MyDreamService extends DreamService {
             Log.e("SimpleWeather", "One or more fields not found in the JSON data" + e);
         }
     }
-    private void setWeatherIcon(int actualId, String openIcon) { // 날씨 상태별 lottie image 변경
+
+    /**
+     * 날씨 상태별 lottie image 변경
+     * @param actualId 날씨정보 구분
+     * @param openIcon 날씨정보 구분
+     */
+    private void setWeatherIcon(int actualId, String openIcon) {
         int id = actualId / 100;
         if (actualId == 800) {
             if (openIcon.equals("01d")) {
